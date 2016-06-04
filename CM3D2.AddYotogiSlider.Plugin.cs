@@ -1084,7 +1084,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
 		public void OnChangeSliderKupaLevel(object ys, SliderEventArgs args)
 		{
-			setExIni ("AutoAHE", "KupaLevel", args.Value);
+			setExIni ("AutoKUPA", "KupaLevel", args.Value);
 			SaveConfig ();
 		}
 
