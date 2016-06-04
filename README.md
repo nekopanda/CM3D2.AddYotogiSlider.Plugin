@@ -15,10 +15,15 @@ zipファイルの中にあるUnityInjectorフォルダをCM3D2フォルダにD&
 
 ANALKUPA 機能を使うには **'analkupa' 対応 body が必要です。**
 対応 body がなくてもそれ以外の機能は動作します。
-また、labiakupa, suji, clitoris に対応しているbodyではクリが興奮によって変化します。
+また、labiakupa, vaginakupa, nyodokupa, sujiをスライダーで変化させることができます。
+clitoris に対応しているbodyではクリが興奮によって変化します。
 
 
 ##更新履歴
+
+### 0.1.0.2
+* 拡張度の保存カテゴリが間違っていたのを修正。
+* labiakupa, vaginakupa, nyodokupa, sujiをスライダーで変化させ値を保存するように変更
 
 ### 0.1.0.1
 * 興奮に反応してクリがアニメーションするようにした。
