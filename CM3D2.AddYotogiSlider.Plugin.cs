@@ -1406,7 +1406,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 iBoteHaraMax   = parseExIni("AutoBOTE", "Max",       iBoteHaraMax);
 
                 panel["AutoKUPA"].Enabled = parseExIni("AutoKUPA", "Enabled", panel["AutoKUPA"].Enabled);
-				slider["KupaLevel"].Value = parseExIni("AutoAHE", "KupaLevel", fKupaLevel);
+				slider["KupaLevel"].Value = parseExIni("AutoKUPA", "KupaLevel", fKupaLevel);
                 slider["LabiaKupa"].Value = parseExIni("AutoKUPA", "LabiaKupa", fLabiaKupa);
                 slider["VaginaKupa"].Value = parseExIni("AutoKUPA", "VaginaKupa", fVaginaKupa);
                 slider["NyodoKupa"].Value = parseExIni("AutoKUPA", "NyodoKupa", fNyodoKupa);
