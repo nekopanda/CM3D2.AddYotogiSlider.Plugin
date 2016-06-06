@@ -905,7 +905,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
         {
             fPassedTimeOnLevel = 0f;
 
-            if (level == 14) StartCoroutine( initCoroutine(TimePerInit) );
+            if (level == 14) {
+                StartCoroutine (initCoroutine (TimePerInit));
+            }
 
             sceneLevel = level;
         }
@@ -920,7 +922,16 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 {
                     case WfScreenChildren.FadeStatus.Null :
                     {
-                        finalize();
+                    this.maid = GameMain.Instance.CharacterMgr.GetMaid(0);
+                    if (!this.maid) return;
+                    this.updateMaidEyePosY(0f);
+                    
+                    this.maid.ResetProp("wear");
+                    this.maid.ResetProp("Hara");
+                    this.maid.ResetAll();
+                    maid.SetProp("Hara", (int)iDefHara, false);
+                    updateSlider("Slider:Hara", iDefHara);
+                    finalize();
                     }
                     break;
 
@@ -1457,7 +1468,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
             iKupaDef           = 0;
             iAnalKupaDef       = 0;
 
-            maid.SetProp("Hara", iDefHara, false);
+            maid.SetProp("Hara", iDefHara, true);
 
             Yotogi.SkillData sd = getCurrentSkillData();
             if (sd != null)
@@ -1977,7 +1988,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private void updateMaidHaraValue(float value)
         {
             try {
-            maid.SetProp("Hara", (int)value, false);
+            maid.SetProp("Hara", (int)value, true);
             maid.body0.VertexMorph_FromProcItem("hara", value/100f);
             } catch { /*LogError(ex);*/ }
 
