@@ -119,6 +119,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
         //AutoBOTE
         private int iDefHara;             //腹の初期値
+        private int iCurrentHara;         //腹の現在値
         private int iHaraIncrement = 10;  //一回の腹の増加値
         private int iBoteHaraMax   = 100; //腹の最大値
         private int iBoteCount     = 0;   //中出し回数
@@ -1468,7 +1469,12 @@ namespace CM3D2.AddYotogiSlider.Plugin
             iKupaDef           = 0;
             iAnalKupaDef       = 0;
 
-            maid.SetProp("Hara", iDefHara, true);
+
+            if(panel["AutoBOTE"].Enabled) {
+                updateMaidHaraValue(Mathf.Max(iCurrentHara, iDefHara));
+            } else {
+                updateMaidHaraValue(iDefHara);
+            }
 
             Yotogi.SkillData sd = getCurrentSkillData();
             if (sd != null)
@@ -1547,6 +1553,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
             fLastSliderSensitivity   = 0f;
 
             iDefHara   = 0;
+            iCurrentHara = 0;
             iBoteCount = 0;
 
             bKupaFuck = false;
@@ -1725,29 +1732,31 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
             if (panel["AutoBOTE"].Enabled)
             {
-                float from = (float)maid.GetProp("Hara").value;
+                float from = (float)Mathf.Max(iCurrentHara, iDefHara);
+                float to = iDefHara;
 
                 if (data.command_type == Yotogi.SkillCommandType.絶頂)
                 {
                     if (data.name.Contains("中出し") || data.name.Contains("注ぎ込む"))
                     {
                         iBoteCount++;
-                        float to = Mathf.Min(iDefHara + iHaraIncrement * iBoteCount, iBoteHaraMax);
+                        to = Mathf.Min(iDefHara + iHaraIncrement * iBoteCount, iBoteHaraMax);
                         pa["BOTE.絶頂"].Play(from, to);
                     }
                     else if (data.name.Contains("外出し"))
                     {
-                        pa["BOTE.止める"].Play(from, iDefHara);
+                        pa["BOTE.止める"].Play(from, to);
                         iBoteCount = 0;
                     }
                 }
                 else if (data.command_type == Yotogi.SkillCommandType.止める)
                 {
-                    pa["BOTE.止める"].Play(from, iDefHara);
+                    pa["BOTE.止める"].Play(from, to);
                     iBoteCount = 0;
                 }
-            }
 
+                iCurrentHara = (int)to;
+            }
 
             if (panel["AutoKUPA"].Enabled)
             {
