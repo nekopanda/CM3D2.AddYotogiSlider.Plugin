@@ -1082,6 +1082,12 @@ namespace CM3D2.AddYotogiSlider.Plugin
         {
             updateMaidEyePosY(args.Value);
         }
+        
+        public void OnChangeToggleSlowCreampie(object tgl, ToggleEventArgs args)
+        {
+            setExIni("AutoBOTE", "SlowCreampie", args.Value);
+            SaveConfig();
+        }
 
         public void OnChangeSliderHara(object ys, SliderEventArgs args)
         {
@@ -1312,7 +1318,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 slider["Sensitivity"] = new YotogiSlider("Slider:Sensitivity",  -100f, 200f,   sensitivity,     this.OnChangeSliderSensitivity, sliderName[3], true);
                 slider["MotionSpeed"] = new YotogiSlider("Slider:MotionSpeed",  0f,    500f,   100f,            this.OnChangeSliderMotionSpeed, sliderName[4], true);
 				slider["EyeY"]        = new YotogiSlider("Slider:EyeY",         0f,    100f,   fAheDefEye,      this.OnChangeSliderEyeY,        sliderNameAutoAHE[0], false);
-				slider["Hara"]        = new YotogiSlider("Slider:Hara",         0f,    150f,   (float)iDefHara, this.OnChangeSliderHara,        sliderNameAutoBOTE[0], false);
+
+                toggle["SlowCreampie"]     = new YotogiToggle("Toggle:SlowCreamPie",      false, " Slow creampie", this.OnChangeToggleSlowCreampie);
+                slider["Hara"]        = new YotogiSlider("Slider:Hara",         0f,    150f,   (float)iDefHara, this.OnChangeSliderHara,        sliderNameAutoBOTE[0], false);
 
 				slider["Kupa"]        = new YotogiSlider("Slider:Kupa",         0f,    150f,   0f,              this.OnChangeSliderKupa,        sliderNameAutoKUPA[0], false);
 				slider["AnalKupa"]    = new YotogiSlider("Slider:AnalKupa",     0f,    150f,   0f,              this.OnChangeSliderAnalKupa,    sliderNameAutoKUPA[1], false);
@@ -1332,6 +1340,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 lSelect["StageSelcet"] = new YotogiLineSelect("LineSelect:StageSelcet", "Stage : ", sStageNames.ToArray(), stageIndex, this.OnClickButtonStageSelect);
 
                 slider["EyeY"].Visible       = false;
+
+                toggle["SlowCreampie"].Visible = false;
                 slider["Hara"].Visible       = false;
 
 				slider["Kupa"].Visible       = false;
@@ -1369,6 +1379,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 window.AddHorizontalSpacer();
 
                 panel["AutoBOTE"] = window.AddChild<YotogiPanel>( new YotogiPanel("Panel:AutoBOTE", "AutoBOTE", OnChangeEnabledAutoBOTE) );
+                panel["AutoBOTE"].AddChild(toggle["SlowCreampie"]);
                 panel["AutoBOTE"].AddChild(slider["Hara"]);
                 window.AddHorizontalSpacer();
 
@@ -1420,6 +1431,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 }
 
                 panel["AutoBOTE"].Enabled = parseExIni("AutoBOTE", "Enabled", panel["AutoBOTE"].Enabled);
+                toggle["SlowCreampie"].Value = parseExIni("AutoBOTE", "SlowCreampie", toggle["SlowCreampie"].Value);
                 iHaraIncrement = parseExIni("AutoBOTE", "Increment", iHaraIncrement);
                 iBoteHaraMax   = parseExIni("AutoBOTE", "Max",       iBoteHaraMax);
 
