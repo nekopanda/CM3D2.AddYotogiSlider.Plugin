@@ -96,6 +96,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private float fLastSliderSensitivity = 0f;
         private float fPassedTimeOnCommand   = -1f;
 
+        private string currentYotogiName;
+        Yotogi.SkillData.Command.Data.Basic currentYotogiData;
+
         //AutoAHE
         private bool     bOrgasmAvailable    = false;                                                     //BodyShapeKeyチェック
         private float    fEyePosToSliderMul  = 5000f;
@@ -215,6 +218,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private FieldInfo           maidStatusInfo;
         private FieldInfo           maidFoceKuchipakuSelfUpdateTime;
 
+        private YotogiManager       yotogiManager;
         private YotogiPlayManager   yotogiPlayManager;
         private YotogiParamBasicBar yotogiParamBasicBar;
         private GameObject          goCommandUnit;
@@ -890,6 +894,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
             pa["AHE.痙攣.2"]  = new PlayAnime("AHE.痙攣.2",  1, 0.00f,  11.00f, PlayAnime.Formula.Convulsion);
             pa["BOTE.絶頂"]   = new PlayAnime("BOTE.絶頂",   1, 0.00f,  6.00f);
             pa["BOTE.止める"] = new PlayAnime("BOTE.止める", 1, 0.00f,  4.00f);
+            pa["BOTE.流れ出る"] = new PlayAnime("BOTE.流れ出る", 1, 0.00f,  20.00f);
             pa["KUPA.挿入.0"] = new PlayAnime("KUPA.挿入.0", 1, 0.50f,  1.50f);
             pa["KUPA.挿入.1"] = new PlayAnime("KUPA.挿入.1", 1, 1.50f,  2.50f);
             pa["KUPA.止める"] = new PlayAnime("KUPA.止める", 1, 0.00f,  2.00f);
@@ -1078,6 +1083,12 @@ namespace CM3D2.AddYotogiSlider.Plugin
         {
             updateMaidEyePosY(args.Value);
         }
+        
+        public void OnChangeToggleSlowCreampie(object tgl, ToggleEventArgs args)
+        {
+            setExIni("AutoBOTE", "SlowCreampie", args.Value);
+            SaveConfig();
+        }
 
         public void OnChangeSliderHara(object ys, SliderEventArgs args)
         {
@@ -1217,6 +1228,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
             // 夜伽コマンドフック
             {
+                this.yotogiManager = getInstance<YotogiManager>();
+                if (!this.yotogiManager) return false;
                 this.yotogiPlayManager = getInstance<YotogiPlayManager>();
                 if (!this.yotogiPlayManager) return false;
 
@@ -1306,7 +1319,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 slider["Sensitivity"] = new YotogiSlider("Slider:Sensitivity",  -100f, 200f,   sensitivity,     this.OnChangeSliderSensitivity, sliderName[3], true);
                 slider["MotionSpeed"] = new YotogiSlider("Slider:MotionSpeed",  0f,    500f,   100f,            this.OnChangeSliderMotionSpeed, sliderName[4], true);
 				slider["EyeY"]        = new YotogiSlider("Slider:EyeY",         0f,    100f,   fAheDefEye,      this.OnChangeSliderEyeY,        sliderNameAutoAHE[0], false);
-				slider["Hara"]        = new YotogiSlider("Slider:Hara",         0f,    150f,   (float)iDefHara, this.OnChangeSliderHara,        sliderNameAutoBOTE[0], false);
+
+                toggle["SlowCreampie"]     = new YotogiToggle("Toggle:SlowCreamPie",      false, " Slow creampie", this.OnChangeToggleSlowCreampie);
+                slider["Hara"]        = new YotogiSlider("Slider:Hara",         0f,    150f,   (float)iDefHara, this.OnChangeSliderHara,        sliderNameAutoBOTE[0], false);
 
 				slider["Kupa"]        = new YotogiSlider("Slider:Kupa",         0f,    150f,   0f,              this.OnChangeSliderKupa,        sliderNameAutoKUPA[0], false);
 				slider["AnalKupa"]    = new YotogiSlider("Slider:AnalKupa",     0f,    150f,   0f,              this.OnChangeSliderAnalKupa,    sliderNameAutoKUPA[1], false);
@@ -1326,6 +1341,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 lSelect["StageSelcet"] = new YotogiLineSelect("LineSelect:StageSelcet", "Stage : ", sStageNames.ToArray(), stageIndex, this.OnClickButtonStageSelect);
 
                 slider["EyeY"].Visible       = false;
+
+                toggle["SlowCreampie"].Visible = false;
                 slider["Hara"].Visible       = false;
 
 				slider["Kupa"].Visible       = false;
@@ -1363,6 +1380,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 window.AddHorizontalSpacer();
 
                 panel["AutoBOTE"] = window.AddChild<YotogiPanel>( new YotogiPanel("Panel:AutoBOTE", "AutoBOTE", OnChangeEnabledAutoBOTE) );
+                panel["AutoBOTE"].AddChild(toggle["SlowCreampie"]);
                 panel["AutoBOTE"].AddChild(slider["Hara"]);
                 window.AddHorizontalSpacer();
 
@@ -1414,6 +1432,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 }
 
                 panel["AutoBOTE"].Enabled = parseExIni("AutoBOTE", "Enabled", panel["AutoBOTE"].Enabled);
+                toggle["SlowCreampie"].Value = parseExIni("AutoBOTE", "SlowCreampie", toggle["SlowCreampie"].Value);
                 iHaraIncrement = parseExIni("AutoBOTE", "Increment", iHaraIncrement);
                 iBoteHaraMax   = parseExIni("AutoBOTE", "Max",       iBoteHaraMax);
 
@@ -1583,6 +1602,24 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
         }
 
+        private void detectSkill() {
+
+            if(yotogiManager.play_skill_array == null) return;
+
+            foreach (YotogiManager.PlayingSkillData skillData in yotogiManager.play_skill_array.Reverse())
+            {
+                if (skillData.is_play)
+                {
+                    var yotogiName = skillData.skill_pair.base_data.name;
+                    if (currentYotogiName == null || !yotogiName.Equals(currentYotogiName))
+                    {
+                        Debug.Log(LogLabel + "Yotogi changed: " + currentYotogiName + " >> " + yotogiName);
+                        currentYotogiName = yotogiName;
+                    }
+                    break;
+                }
+            }
+        }
         //----
 
         private void syncSlidersOnClickCommand(Yotogi.SkillData.Command.Data.Status cmStatus)
@@ -1607,7 +1644,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
             else foreach (AnimationState stat in anm_BO_body001) if (stat.enabled) slider["MotionSpeed"].Value = stat.speed * 100f;
 
             slider["EyeY"].Value = maid.body0.trsEyeL.localPosition.y * fEyePosToSliderMul;
-            slider["Hara"].Value = (float)maid.GetProp("Hara").value;
+            if (!toggle["SlowCreampie"].Value) {
+                slider["Hara"].Value = (float)maid.GetProp("Hara").value;
+            }
         }
 
         private IEnumerator syncMotionSpeedSliderCoroutine(float waitTime)
@@ -1667,15 +1706,20 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 // アニメ再生中にコマンド実行で強制的に終端値に
                 if (pa["BOTE.絶頂"].NowPlaying)
                 {
-                    updateMaidHaraValue(Mathf.Min(iDefHara + iHaraIncrement * iBoteCount, iBoteHaraMax));
+                    if(toggle["SlowCreampie"].Value) {
+                        updateMaidHaraValue(Mathf.Min(iCurrentHara, iBoteHaraMax));
+                    } else {
+                        updateMaidHaraValue(Mathf.Min(iCurrentHara + iHaraIncrement, iBoteHaraMax));
+                    }
                 }
-                if (pa["BOTE.止める"].NowPlaying)
+                if (pa["BOTE.止める"].NowPlaying || pa["BOTE.流れ出る"].NowPlaying)
                 {
-                    updateMaidHaraValue(iDefHara);
+                    updateMaidHaraValue(iCurrentHara);
                 }
 
                 pa["BOTE.絶頂"].Stop();
                 pa["BOTE.止める"].Stop();
+                pa["BOTE.流れ出る"].Stop();
             }
 
             if (panel["AutoKUPA"].Enabled)
@@ -1692,6 +1736,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private void playAnimeOnCommand(Yotogi.SkillData.Command.Data.Basic data)
         {
             LogDebug("Skill:{0} Command:{1} Type:{2}", data.group_name, data.name, data.command_type);
+            this.currentYotogiData = data;
 
             if (panel["AutoAHE"].Enabled)
             {
@@ -1740,22 +1785,58 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     if (data.name.Contains("中出し") || data.name.Contains("注ぎ込む"))
                     {
                         iBoteCount++;
-                        to = Mathf.Min(iDefHara + iHaraIncrement * iBoteCount, iBoteHaraMax);
+                        to = Mathf.Min(iCurrentHara + iHaraIncrement, iBoteHaraMax);
                         pa["BOTE.絶頂"].Play(from, to);
                     }
                     else if (data.name.Contains("外出し"))
                     {
-                        pa["BOTE.止める"].Play(from, to);
+                        if(toggle["SlowCreampie"].Value) {
+                            pa["BOTE.流れ出る"].Play(from, to);
+                        } else {
+                            pa["BOTE.止める"].Play(from, to);
+                        }
                         iBoteCount = 0;
                     }
                 }
                 else if (data.command_type == Yotogi.SkillCommandType.止める)
                 {
-                    pa["BOTE.止める"].Play(from, to);
+                    if(toggle["SlowCreampie"].Value) {
+                        pa["BOTE.流れ出る"].Play(from, to);
+                    } else {
+                        pa["BOTE.止める"].Play(from, to);
+                    }
                     iBoteCount = 0;
                 }
 
-                iCurrentHara = (int)to;
+                if(from <= to) {
+                    iCurrentHara = (int)to;
+                }
+   
+                if (data.command_type != Yotogi.SkillCommandType.絶頂)
+                {
+                    if (data.command_type != Yotogi.SkillCommandType.止める)
+                    {
+                            // 挿入
+                        if (pa["BOTE.止める"].NowPlaying || pa["BOTE.流れ出る"].NowPlaying) {
+                            pa["BOTE.流れ出る"].Stop();
+                            pa["BOTE.止める"].Stop();
+                        }
+                        iBoteCount = 0;
+                    } else {
+                        // 未挿入
+                        from = (float)Mathf.Max(iCurrentHara, iDefHara);
+                        to = iDefHara;
+                        
+                        if ((!pa["BOTE.止める"].NowPlaying && !pa["BOTE.流れ出る"].NowPlaying) && from > to) {
+                            if(toggle["SlowCreampie"].Value) {
+                                pa["BOTE.流れ出る"].Play(from, to);
+                            } else {
+                                pa["BOTE.止める"].Play(from, to);
+                            }
+                            iBoteCount = 0;
+                        }
+                    }
+                }
             }
 
             if (panel["AutoKUPA"].Enabled)
@@ -1876,6 +1957,26 @@ namespace CM3D2.AddYotogiSlider.Plugin
             {
                 if (pa["BOTE.絶頂"].NowPlaying)   pa["BOTE.絶頂"].Update();
                 if (pa["BOTE.止める"].NowPlaying) pa["BOTE.止める"].Update();
+                if (pa["BOTE.流れ出る"].NowPlaying) pa["BOTE.流れ出る"].Update();
+                
+                if (!pa["BOTE.絶頂"].NowPlaying && (pa["BOTE.止める"].NowPlaying || pa["BOTE.流れ出る"].NowPlaying)) iCurrentHara = (int)slider["Hara"].Value;                
+
+                this.detectSkill();
+                if (this.currentYotogiData != null && this.currentYotogiData.command_type != Yotogi.SkillCommandType.絶頂) {
+                    if (this.currentYotogiData != null && this.currentYotogiData.command_type == Yotogi.SkillCommandType.止める) {
+                        float from = (float)Mathf.Max(iCurrentHara, iDefHara);
+                        float to = iDefHara;
+                            
+                        if ((!pa["BOTE.止める"].NowPlaying && !pa["BOTE.流れ出る"].NowPlaying) && from > to) {
+                            if(toggle["SlowCreampie"].Value) {
+                                pa["BOTE.流れ出る"].Play(from, to);
+                            } else {
+                                pa["BOTE.止める"].Play(from, to);
+                            }
+                            iBoteCount = 0;
+                        }
+                    }
+                }
             }
 
             if (panel["AutoKUPA"].Enabled)
