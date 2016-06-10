@@ -1436,8 +1436,12 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 iHaraIncrement = parseExIni("AutoBOTE", "Increment", iHaraIncrement);
                 iBoteHaraMax   = parseExIni("AutoBOTE", "Max",       iBoteHaraMax);
 
-                panel["AutoKUPA"].Enabled = parseExIni("AutoKUPA", "Enabled", panel["AutoKUPA"].Enabled);
-				slider["KupaLevel"].Value = parseExIni("AutoKUPA", "KupaLevel", fKupaLevel);
+                if(bKupaAvailable || bAnalKupaAvailable) {
+                    panel["AutoKUPA"].Enabled = parseExIni("AutoKUPA", "Enabled", panel["AutoKUPA"].Enabled);
+                } else {
+                    panel["AutoKUPA"].Enabled = false;
+                }
+                slider["KupaLevel"].Value = parseExIni("AutoKUPA", "KupaLevel", fKupaLevel);
                 slider["LabiaKupa"].Value = parseExIni("AutoKUPA", "LabiaKupa", fLabiaKupa);
                 slider["VaginaKupa"].Value = parseExIni("AutoKUPA", "VaginaKupa", fVaginaKupa);
                 slider["NyodoKupa"].Value = parseExIni("AutoKUPA", "NyodoKupa", fNyodoKupa);
@@ -2191,7 +2195,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private void updateOrgasmConvulsion(float value)
         {
             //goBip01LThigh.transform.localRotation *= Quaternion.Euler(0f, 10f*value, 0f);
-            updateShapeKeyOrgasmValue(value);
+            if(bOrgasmAvailable) {
+                updateShapeKeyOrgasmValue(value);
+            }
         }
 
         private void updateMotionSpeed(float value)
