@@ -97,6 +97,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private float fPassedTimeOnCommand   = -1f;
 
         private string currentYotogiName;
+        Yotogi.SkillData.Command.Data.Basic currentYotogiData;
+
         //AutoAHE
         private bool     bOrgasmAvailable    = false;                                                     //BodyShapeKeyチェック
         private float    fEyePosToSliderMul  = 5000f;
@@ -1714,6 +1716,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private void playAnimeOnCommand(Yotogi.SkillData.Command.Data.Basic data)
         {
             LogDebug("Skill:{0} Command:{1} Type:{2}", data.group_name, data.name, data.command_type);
+            this.currentYotogiData = data;
 
             if (panel["AutoAHE"].Enabled)
             {
