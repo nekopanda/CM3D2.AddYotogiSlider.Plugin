@@ -894,6 +894,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
             pa["AHE.痙攣.2"]  = new PlayAnime("AHE.痙攣.2",  1, 0.00f,  11.00f, PlayAnime.Formula.Convulsion);
             pa["BOTE.絶頂"]   = new PlayAnime("BOTE.絶頂",   1, 0.00f,  6.00f);
             pa["BOTE.止める"] = new PlayAnime("BOTE.止める", 1, 0.00f,  4.00f);
+            pa["BOTE.流れ出る"] = new PlayAnime("BOTE.流れ出る", 1, 0.00f,  20.00f);
             pa["KUPA.挿入.0"] = new PlayAnime("KUPA.挿入.0", 1, 0.50f,  1.50f);
             pa["KUPA.挿入.1"] = new PlayAnime("KUPA.挿入.1", 1, 1.50f,  2.50f);
             pa["KUPA.止める"] = new PlayAnime("KUPA.止める", 1, 0.00f,  2.00f);
@@ -1643,7 +1644,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
             else foreach (AnimationState stat in anm_BO_body001) if (stat.enabled) slider["MotionSpeed"].Value = stat.speed * 100f;
 
             slider["EyeY"].Value = maid.body0.trsEyeL.localPosition.y * fEyePosToSliderMul;
-            slider["Hara"].Value = (float)maid.GetProp("Hara").value;
+            if (!toggle["SlowCreampie"].Value) {
+                slider["Hara"].Value = (float)maid.GetProp("Hara").value;
+            }
         }
 
         private IEnumerator syncMotionSpeedSliderCoroutine(float waitTime)
@@ -1703,15 +1706,20 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 // アニメ再生中にコマンド実行で強制的に終端値に
                 if (pa["BOTE.絶頂"].NowPlaying)
                 {
-                    updateMaidHaraValue(Mathf.Min(iDefHara + iHaraIncrement * iBoteCount, iBoteHaraMax));
+                    if(toggle["SlowCreampie"].Value) {
+                        updateMaidHaraValue(Mathf.Min(iCurrentHara, iBoteHaraMax));
+                    } else {
+                        updateMaidHaraValue(Mathf.Min(iCurrentHara + iHaraIncrement, iBoteHaraMax));
+                    }
                 }
-                if (pa["BOTE.止める"].NowPlaying)
+                if (pa["BOTE.止める"].NowPlaying || pa["BOTE.流れ出る"].NowPlaying)
                 {
-                    updateMaidHaraValue(iDefHara);
+                    updateMaidHaraValue(iCurrentHara);
                 }
 
                 pa["BOTE.絶頂"].Stop();
                 pa["BOTE.止める"].Stop();
+                pa["BOTE.流れ出る"].Stop();
             }
 
             if (panel["AutoKUPA"].Enabled)
@@ -1777,22 +1785,58 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     if (data.name.Contains("中出し") || data.name.Contains("注ぎ込む"))
                     {
                         iBoteCount++;
-                        to = Mathf.Min(iDefHara + iHaraIncrement * iBoteCount, iBoteHaraMax);
+                        to = Mathf.Min(iCurrentHara + iHaraIncrement, iBoteHaraMax);
                         pa["BOTE.絶頂"].Play(from, to);
                     }
                     else if (data.name.Contains("外出し"))
                     {
-                        pa["BOTE.止める"].Play(from, to);
+                        if(toggle["SlowCreampie"].Value) {
+                            pa["BOTE.流れ出る"].Play(from, to);
+                        } else {
+                            pa["BOTE.止める"].Play(from, to);
+                        }
                         iBoteCount = 0;
                     }
                 }
                 else if (data.command_type == Yotogi.SkillCommandType.止める)
                 {
-                    pa["BOTE.止める"].Play(from, to);
+                    if(toggle["SlowCreampie"].Value) {
+                        pa["BOTE.流れ出る"].Play(from, to);
+                    } else {
+                        pa["BOTE.止める"].Play(from, to);
+                    }
                     iBoteCount = 0;
                 }
 
-                iCurrentHara = (int)to;
+                if(from <= to) {
+                    iCurrentHara = (int)to;
+                }
+   
+                if (data.command_type != Yotogi.SkillCommandType.絶頂)
+                {
+                    if (data.command_type != Yotogi.SkillCommandType.止める)
+                    {
+                            // 挿入
+                        if (pa["BOTE.止める"].NowPlaying || pa["BOTE.流れ出る"].NowPlaying) {
+                            pa["BOTE.流れ出る"].Stop();
+                            pa["BOTE.止める"].Stop();
+                        }
+                        iBoteCount = 0;
+                    } else {
+                        // 未挿入
+                        from = (float)Mathf.Max(iCurrentHara, iDefHara);
+                        to = iDefHara;
+                        
+                        if ((!pa["BOTE.止める"].NowPlaying && !pa["BOTE.流れ出る"].NowPlaying) && from > to) {
+                            if(toggle["SlowCreampie"].Value) {
+                                pa["BOTE.流れ出る"].Play(from, to);
+                            } else {
+                                pa["BOTE.止める"].Play(from, to);
+                            }
+                            iBoteCount = 0;
+                        }
+                    }
+                }
             }
 
             if (panel["AutoKUPA"].Enabled)
@@ -1913,6 +1957,26 @@ namespace CM3D2.AddYotogiSlider.Plugin
             {
                 if (pa["BOTE.絶頂"].NowPlaying)   pa["BOTE.絶頂"].Update();
                 if (pa["BOTE.止める"].NowPlaying) pa["BOTE.止める"].Update();
+                if (pa["BOTE.流れ出る"].NowPlaying) pa["BOTE.流れ出る"].Update();
+                
+                if (!pa["BOTE.絶頂"].NowPlaying && (pa["BOTE.止める"].NowPlaying || pa["BOTE.流れ出る"].NowPlaying)) iCurrentHara = (int)slider["Hara"].Value;                
+
+                this.detectSkill();
+                if (this.currentYotogiData != null && this.currentYotogiData.command_type != Yotogi.SkillCommandType.絶頂) {
+                    if (this.currentYotogiData != null && this.currentYotogiData.command_type == Yotogi.SkillCommandType.止める) {
+                        float from = (float)Mathf.Max(iCurrentHara, iDefHara);
+                        float to = iDefHara;
+                            
+                        if ((!pa["BOTE.止める"].NowPlaying && !pa["BOTE.流れ出る"].NowPlaying) && from > to) {
+                            if(toggle["SlowCreampie"].Value) {
+                                pa["BOTE.流れ出る"].Play(from, to);
+                            } else {
+                                pa["BOTE.止める"].Play(from, to);
+                            }
+                            iBoteCount = 0;
+                        }
+                    }
+                }
             }
 
             if (panel["AutoKUPA"].Enabled)
