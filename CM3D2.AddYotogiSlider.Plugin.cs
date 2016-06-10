@@ -96,6 +96,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private float fLastSliderSensitivity = 0f;
         private float fPassedTimeOnCommand   = -1f;
 
+        private string currentYotogiName;
         //AutoAHE
         private bool     bOrgasmAvailable    = false;                                                     //BodyShapeKeyチェック
         private float    fEyePosToSliderMul  = 5000f;
@@ -215,6 +216,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private FieldInfo           maidStatusInfo;
         private FieldInfo           maidFoceKuchipakuSelfUpdateTime;
 
+        private YotogiManager       yotogiManager;
         private YotogiPlayManager   yotogiPlayManager;
         private YotogiParamBasicBar yotogiParamBasicBar;
         private GameObject          goCommandUnit;
@@ -1217,6 +1219,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
             // 夜伽コマンドフック
             {
+                this.yotogiManager = getInstance<YotogiManager>();
+                if (!this.yotogiManager) return false;
                 this.yotogiPlayManager = getInstance<YotogiPlayManager>();
                 if (!this.yotogiPlayManager) return false;
 
@@ -1583,6 +1587,24 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
         }
 
+        private void detectSkill() {
+
+            if(yotogiManager.play_skill_array == null) return;
+
+            foreach (YotogiManager.PlayingSkillData skillData in yotogiManager.play_skill_array.Reverse())
+            {
+                if (skillData.is_play)
+                {
+                    var yotogiName = skillData.skill_pair.base_data.name;
+                    if (currentYotogiName == null || !yotogiName.Equals(currentYotogiName))
+                    {
+                        Debug.Log(LogLabel + "Yotogi changed: " + currentYotogiName + " >> " + yotogiName);
+                        currentYotogiName = yotogiName;
+                    }
+                    break;
+                }
+            }
+        }
         //----
 
         private void syncSlidersOnClickCommand(Yotogi.SkillData.Command.Data.Status cmStatus)
