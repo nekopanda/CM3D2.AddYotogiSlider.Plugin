@@ -411,7 +411,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 Rect cur = outRect;
                 labelStyle = "label";
 
-                cur.width = outRect.width * 0.1625f;
+                cur.width = outRect.width * 0.3625f;
                 labelStyle.fontSize = PV.Font(fontSizePV);
                 labelStyle.alignment = TextAnchor.MiddleCenter;
                 GUI.Label(cur, labelText, labelStyle);
@@ -424,7 +424,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 GUI.Label(cur, slider.Value.ToString("F0"), labelStyle);
                 cur.x += cur.width + outRect.width * 0.005f;
 
-                cur.width = outRect.width * 0.60f;
+                cur.width = outRect.width * 0.400f;
                 cur.y += PV.PropPx(4);
                 slider.Draw(cur);
                 cur.y -= PV.PropPx(4);
