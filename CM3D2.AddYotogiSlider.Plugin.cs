@@ -73,7 +73,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private string[] sKey =  { "WIN", "STATUS", "AHE", "BOTE", "FACEBLEND", "FACEANIME"};
         private string[] sliderName = {"興奮", "精神", "理性", "感度", "速度"};
 		private string[] sliderNameAutoAHE = {"瞳Y"};
-        private string[] sliderNameAutoTUN = {"乳首肥大度", "乳首勃起", "乳首たれ"};
+        private string[] sliderNameAutoTUN = {"乳首肥大度", "乳首萎え", "乳首勃起", "乳首たれ"};
         private string[] sliderNameAutoBOTE = {"腹"};
         private string[] sliderNameAutoKUPA = {"前", "後", "拡張度", "陰唇", "膣", "尿道", "すじ", "クリ"};
 		private List<string> sStageNames = new List<string>();
@@ -123,10 +123,13 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
         // AutoTUN
         private bool  bBokkiChikubiAvailable = false;
-        private float fChikubiScale = 50f;
+        private float fChikubiScale = 25f;
+        private float fChikubiNae   = 0f;
         private float fChikubiBokki = 0f;
         private float fChikubiTare  = 0f;
-        
+        private float iDefChikubiNae;
+        private float iDefChikubiTare;
+
         //AutoBOTE
         private int iDefHara;             //腹の初期値
         private int iCurrentHara;         //腹の現在値
@@ -944,6 +947,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     this.maid.ResetAll();
                     maid.SetProp("Hara", (int)iDefHara, false);
                     updateSlider("Slider:Hara", iDefHara);
+                    this.updateShapeKeyChikubiBokkiValue(iDefChikubiNae);
+                    this.updateShapeKeyChikubiTareValue(iDefChikubiTare);
+
                     finalize();
                     }
                     break;
@@ -1099,12 +1105,17 @@ namespace CM3D2.AddYotogiSlider.Plugin
             SaveConfig();
         }
         
+        public void OnChangeSliderChikubiNae(object ys, SliderEventArgs args)
+        {
+            updateChikubiNaeValue(args.Value);
+            setExIni("AutoTUN", "ChikubiNae", args.Value);
+            SaveConfig();
+        }
+
         public void OnChangeSliderChikubiBokki(object ys, SliderEventArgs args)
         {
             float value = args.Value * slider["ChikubiScale"].Value / 100;
             updateShapeKeyChikubiBokkiValue(value);
-            setExIni("AutoTUN", "ChikubiBokki", args.Value);
-            SaveConfig();
         }
         
         public void OnChangeSliderChikubiTare(object ys, SliderEventArgs args)
@@ -1360,8 +1371,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
 				slider["EyeY"]        = new YotogiSlider("Slider:EyeY",         0f,    100f,   fAheDefEye,      this.OnChangeSliderEyeY,        sliderNameAutoAHE[0], false);
                 
                 slider["ChikubiScale"] = new YotogiSlider("Slider:ChikubiScale",           1f,    100f,   fChikubiScale,      this.OnChangeSliderChikubiScale,        sliderNameAutoTUN[0], true);
-                slider["ChikubiBokki"] = new YotogiSlider("Slider:ChikubiBokki",         -15f,    150f,   fChikubiBokki,      this.OnChangeSliderChikubiBokki,        sliderNameAutoTUN[1], true);
-                slider["ChikubiTare"]  = new YotogiSlider("Slider:ChikubiTare",          0f,    150f,   fChikubiTare,       this.OnChangeSliderChikubiTare,         sliderNameAutoTUN[2], true);
+                slider["ChikubiNae"]   = new YotogiSlider("Slider:ChikubiNae",           -15f,    150f,   fChikubiNae,        this.OnChangeSliderChikubiNae,          sliderNameAutoTUN[1], true);
+                slider["ChikubiBokki"] = new YotogiSlider("Slider:ChikubiBokki",         -15f,    150f,   fChikubiBokki,      this.OnChangeSliderChikubiBokki,        sliderNameAutoTUN[2], true);
+                slider["ChikubiTare"]  = new YotogiSlider("Slider:ChikubiTare",            0f,    150f,   fChikubiTare,       this.OnChangeSliderChikubiTare,         sliderNameAutoTUN[3], true);
 
                 toggle["SlowCreampie"]     = new YotogiToggle("Toggle:SlowCreamPie",      false, " Slow creampie", this.OnChangeToggleSlowCreampie);
                 slider["Hara"]        = new YotogiSlider("Slider:Hara",         0f,    150f,   (float)iDefHara, this.OnChangeSliderHara,        sliderNameAutoBOTE[0], false);
@@ -1386,6 +1398,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 slider["EyeY"].Visible       = false;
 
                 slider["ChikubiScale"].Visible       = false;
+                slider["ChikubiNae"].Visible       = false;
                 slider["ChikubiBokki"].Visible       = false;
                 slider["ChikubiTare"].Visible       = false;
 
@@ -1431,6 +1444,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 {
                     panel["AutoTUN"] = window.AddChild(panel["AutoTUN"]);
                     panel["AutoTUN"].AddChild(slider["ChikubiScale"]);
+                    panel["AutoTUN"].AddChild(slider["ChikubiNae"]);
                     panel["AutoTUN"].AddChild(slider["ChikubiBokki"]);
                     panel["AutoTUN"].AddChild(slider["ChikubiTare"]);
                     window.AddHorizontalSpacer();
@@ -1488,10 +1502,17 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     sAheOrgasmFaceBlend[i]  = parseExIni("AutoAHE", "OrgasmFaceBlend_"+ i, sAheOrgasmFaceBlend[i]);
                 }
 
-                panel["AutoTUN"].Enabled = parseExIni("AutoTUN", "Enabled", panel["AutoTUN"].Enabled);
+                if(bBokkiChikubiAvailable) {
+                    panel["AutoTUN"].Enabled = parseExIni("AutoTUN", "Enabled", panel["AutoTUN"].Enabled);
+                } else {
+                    panel["AutoTUN"].Enabled = false;
+                }                
                 slider["ChikubiScale"].Value = parseExIni("AutoTUN", "ChikubiScale", fChikubiScale);
-                slider["ChikubiBokki"].Value = parseExIni("AutoTUN", "ChikubiBokki", fChikubiBokki);
+                slider["ChikubiNae"].Value   = parseExIni("AutoTUN", "ChikubiNae",   fChikubiNae);
+                slider["ChikubiBokki"].Value = slider["ChikubiNae"].Value;
                 slider["ChikubiTare"].Value  = parseExIni("AutoTUN", "ChikubiTare",  fChikubiTare);
+                iDefChikubiNae = slider["ChikubiNae"].Value;
+                iDefChikubiTare = slider["ChikubiTare"].Value;
 
                 panel["AutoBOTE"].Enabled = parseExIni("AutoBOTE", "Enabled", panel["AutoBOTE"].Enabled);
                 toggle["SlowCreampie"].Value = parseExIni("AutoBOTE", "SlowCreampie", toggle["SlowCreampie"].Value);
@@ -1554,6 +1575,11 @@ namespace CM3D2.AddYotogiSlider.Plugin
             iKupaDef           = 0;
             iAnalKupaDef       = 0;
 
+            if (panel ["AutoTUN"].Enabled) {
+                if(slider["ChikubiBokki"].Value > 0) {
+                    updateShapeKeyChikubiBokkiValue(slider["ChikubiBokki"].Value / 2f);
+                }
+            }
 
             if(panel["AutoBOTE"].Enabled) {
                 updateMaidHaraValue(Mathf.Max(iCurrentHara, iDefHara));
@@ -2204,6 +2230,27 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
             updateSlider("Slider:EyeY", value);
         }
+
+        private void updateChikubiNaeValue(float value)
+        {
+            float forceTareValue = 0f;
+            if(value < 0) {
+                forceTareValue = 0f - value;
+            }
+            
+            try {
+                if(forceTareValue > 0f) {
+                    updateShapeKeyChikubiTareValue(forceTareValue);
+                }
+                if(slider["ChikubiBokki"].Value < value) {
+                    updateShapeKeyChikubiBokkiValue(value);
+                }
+                
+            } catch { /*LogError(ex);*/ }
+            
+            updateSlider("Slider:ChikubiNae", value);
+        }
+
         private void updateShapeKeyChikubiBokkiValue(float value)
         {
             float forceTareValue = 0f;
@@ -2212,10 +2259,10 @@ namespace CM3D2.AddYotogiSlider.Plugin
             }
             
             try {
-                VertexMorph_FromProcItem(this.maid.body0, "chikubi_bokki", (value > 0f)? (value/100f) : 0f);
                 if(forceTareValue > 0f) {
                     updateShapeKeyChikubiTareValue(forceTareValue);
                 }
+                VertexMorph_FromProcItem(this.maid.body0, "chikubi_bokki", (value > 0f)? (value/100f) : 0f);
             } catch { /*LogError(ex);*/ }
             
             updateSlider("Slider:ChikubiBokki", value);
