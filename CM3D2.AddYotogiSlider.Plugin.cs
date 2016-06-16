@@ -43,6 +43,14 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private readonly float WaitBoneLoad       = 1.00f;
         private readonly string commandUnitName = "/UI Root/YotogiPlayPanel/CommandViewer/SkillViewer/MaskGroup/SkillGroup/CommandParent/CommandUnit";
         private const string LogLabel = AddYotogiSlider.PluginName + " : ";
+        
+        public enum TunLevel
+        {
+            None = -1,
+            Friction = 0,
+            Petting = 1,
+            Nip = 2,
+        }
 
         public enum KupaLevel
         {
@@ -73,7 +81,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private string[] sKey =  { "WIN", "STATUS", "AHE", "BOTE", "FACEBLEND", "FACEANIME"};
         private string[] sliderName = {"興奮", "精神", "理性", "感度", "速度"};
 		private string[] sliderNameAutoAHE = {"瞳Y"};
-		private string[] sliderNameAutoBOTE = {"腹"};
+        private string[] sliderNameAutoTUN = {"乳首肥大度", "乳首萎え", "乳首勃起", "乳首たれ"};
+        private string[] sliderNameAutoBOTE = {"腹"};
         private string[] sliderNameAutoKUPA = {"前", "後", "拡張度", "陰唇", "膣", "尿道", "すじ", "クリ"};
 		private List<string> sStageNames = new List<string>();
         private Dictionary<string, PlayAnime> pa = new Dictionary<string, PlayAnime>();
@@ -119,6 +128,16 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private string[] sAheOrgasmFace      = new string[] { "エロ放心", "エロ好感３", "通常射精後１" }; //絶頂時のFace
         private string[] sAheOrgasmFaceBlend = new string[] { "頬１涙１", "頬２涙２", "頬３涙３よだれ" }; //絶頂時のFaceBlend
         private int      iAheOrgasmChain     = 0;
+
+        // AutoTUN
+        private bool  bBokkiChikubiAvailable = false;
+        private int[] iTunValue = { 3, 5, 100 }; // 乳首勃起増加量
+        private float fChikubiScale = 25f;
+        private float fChikubiNae   = 0f;
+        private float fChikubiBokki = 0f;
+        private float fChikubiTare  = 0f;
+        private float iDefChikubiNae;
+        private float iDefChikubiTare;
 
         //AutoBOTE
         private int iDefHara;             //腹の初期値
@@ -411,7 +430,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 Rect cur = outRect;
                 labelStyle = "label";
 
-                cur.width = outRect.width * 0.1625f;
+                cur.width = outRect.width * 0.3625f;
                 labelStyle.fontSize = PV.Font(fontSizePV);
                 labelStyle.alignment = TextAnchor.MiddleCenter;
                 GUI.Label(cur, labelText, labelStyle);
@@ -424,7 +443,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 GUI.Label(cur, slider.Value.ToString("F0"), labelStyle);
                 cur.x += cur.width + outRect.width * 0.005f;
 
-                cur.width = outRect.width * 0.60f;
+                cur.width = outRect.width * 0.400f;
                 cur.y += PV.PropPx(4);
                 slider.Draw(cur);
                 cur.y -= PV.PropPx(4);
@@ -937,6 +956,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     this.maid.ResetAll();
                     maid.SetProp("Hara", (int)iDefHara, false);
                     updateSlider("Slider:Hara", iDefHara);
+                    this.updateShapeKeyChikubiBokkiValue(iDefChikubiNae);
+                    this.updateShapeKeyChikubiTareValue(iDefChikubiTare);
+
                     finalize();
                     }
                     break;
@@ -1084,6 +1106,34 @@ namespace CM3D2.AddYotogiSlider.Plugin
             updateMaidEyePosY(args.Value);
         }
         
+        public void OnChangeSliderChikubiScale(object ys, SliderEventArgs args)
+        {
+            float value = slider["ChikubiBokki"].Value * slider["ChikubiScale"].Value / 100;
+            updateShapeKeyChikubiBokkiValue(value);
+            setExIni("AutoTUN", "ChikubiScale", args.Value);
+            SaveConfig();
+        }
+        
+        public void OnChangeSliderChikubiNae(object ys, SliderEventArgs args)
+        {
+            updateChikubiNaeValue(args.Value);
+            setExIni("AutoTUN", "ChikubiNae", args.Value);
+            SaveConfig();
+        }
+
+        public void OnChangeSliderChikubiBokki(object ys, SliderEventArgs args)
+        {
+            float value = args.Value * slider["ChikubiScale"].Value / 100;
+            updateShapeKeyChikubiBokkiValue(value);
+        }
+        
+        public void OnChangeSliderChikubiTare(object ys, SliderEventArgs args)
+        {
+            updateShapeKeyChikubiTareValue(args.Value);
+            setExIni("AutoTUN", "ChikubiTare", args.Value);
+            SaveConfig();
+        }
+
         public void OnChangeToggleSlowCreampie(object tgl, ToggleEventArgs args)
         {
             setExIni("AutoBOTE", "SlowCreampie", args.Value);
@@ -1161,6 +1211,12 @@ namespace CM3D2.AddYotogiSlider.Plugin
             SaveConfig();
         }
 
+        public void OnChangeEnabledAutoTUN(object panel, ToggleEventArgs args)
+        {
+            setExIni("AutoTUN", "Enabled", args.Value);
+            SaveConfig();
+        }
+        
         public void OnChangeEnabledAutoBOTE(object panel, ToggleEventArgs args)
         {
             setExIni("AutoBOTE", "Enabled", args.Value);
@@ -1304,6 +1360,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
             bSujiAvailable = maid.body0.goSlot[0].morph.hash.ContainsKey("suji");
 			bClitorisAvailable = maid.body0.goSlot[0].morph.hash.ContainsKey("clitoris");
 
+            // BokkiChikubi ShapeKeyCheck
+            bBokkiChikubiAvailable = this.isExistVertexMorph(maid.body0, "chikubi_bokki");
+
             // Window
             {
                 window = new Window(winRatioRect, AddYotogiSlider.Version, "Yotogi Slider");
@@ -1319,6 +1378,11 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 slider["Sensitivity"] = new YotogiSlider("Slider:Sensitivity",  -100f, 200f,   sensitivity,     this.OnChangeSliderSensitivity, sliderName[3], true);
                 slider["MotionSpeed"] = new YotogiSlider("Slider:MotionSpeed",  0f,    500f,   100f,            this.OnChangeSliderMotionSpeed, sliderName[4], true);
 				slider["EyeY"]        = new YotogiSlider("Slider:EyeY",         0f,    100f,   fAheDefEye,      this.OnChangeSliderEyeY,        sliderNameAutoAHE[0], false);
+                
+                slider["ChikubiScale"] = new YotogiSlider("Slider:ChikubiScale",           1f,    100f,   fChikubiScale,      this.OnChangeSliderChikubiScale,        sliderNameAutoTUN[0], true);
+                slider["ChikubiNae"]   = new YotogiSlider("Slider:ChikubiNae",           -15f,    150f,   fChikubiNae,        this.OnChangeSliderChikubiNae,          sliderNameAutoTUN[1], true);
+                slider["ChikubiBokki"] = new YotogiSlider("Slider:ChikubiBokki",         -15f,    150f,   fChikubiBokki,      this.OnChangeSliderChikubiBokki,        sliderNameAutoTUN[2], true);
+                slider["ChikubiTare"]  = new YotogiSlider("Slider:ChikubiTare",            0f,    150f,   fChikubiTare,       this.OnChangeSliderChikubiTare,         sliderNameAutoTUN[3], true);
 
                 toggle["SlowCreampie"]     = new YotogiToggle("Toggle:SlowCreamPie",      false, " Slow creampie", this.OnChangeToggleSlowCreampie);
                 slider["Hara"]        = new YotogiSlider("Slider:Hara",         0f,    150f,   (float)iDefHara, this.OnChangeSliderHara,        sliderNameAutoBOTE[0], false);
@@ -1341,6 +1405,11 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 lSelect["StageSelcet"] = new YotogiLineSelect("LineSelect:StageSelcet", "Stage : ", sStageNames.ToArray(), stageIndex, this.OnClickButtonStageSelect);
 
                 slider["EyeY"].Visible       = false;
+
+                slider["ChikubiScale"].Visible       = false;
+                slider["ChikubiNae"].Visible       = false;
+                slider["ChikubiBokki"].Visible       = false;
+                slider["ChikubiTare"].Visible       = false;
 
                 toggle["SlowCreampie"].Visible = false;
                 slider["Hara"].Visible       = false;
@@ -1378,6 +1447,17 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 }
                 panel["AutoAHE"].AddChild(slider["EyeY"]);
                 window.AddHorizontalSpacer();
+
+                panel["AutoTUN"] = new YotogiPanel("Panel:AutoTUN", "AutoTUN", OnChangeEnabledAutoTUN);
+                if (bBokkiChikubiAvailable)
+                {
+                    panel["AutoTUN"] = window.AddChild(panel["AutoTUN"]);
+                    panel["AutoTUN"].AddChild(slider["ChikubiScale"]);
+                    panel["AutoTUN"].AddChild(slider["ChikubiNae"]);
+                    panel["AutoTUN"].AddChild(slider["ChikubiBokki"]);
+                    panel["AutoTUN"].AddChild(slider["ChikubiTare"]);
+                    window.AddHorizontalSpacer();
+                }
 
                 panel["AutoBOTE"] = window.AddChild<YotogiPanel>( new YotogiPanel("Panel:AutoBOTE", "AutoBOTE", OnChangeEnabledAutoBOTE) );
                 panel["AutoBOTE"].AddChild(toggle["SlowCreampie"]);
@@ -1430,6 +1510,18 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     sAheOrgasmFace[i]       = parseExIni("AutoAHE", "OrgasmFace_"+ i, sAheOrgasmFace[i]);
                     sAheOrgasmFaceBlend[i]  = parseExIni("AutoAHE", "OrgasmFaceBlend_"+ i, sAheOrgasmFaceBlend[i]);
                 }
+
+                if(bBokkiChikubiAvailable) {
+                    panel["AutoTUN"].Enabled = parseExIni("AutoTUN", "Enabled", panel["AutoTUN"].Enabled);
+                } else {
+                    panel["AutoTUN"].Enabled = false;
+                }                
+                slider["ChikubiScale"].Value = parseExIni("AutoTUN", "ChikubiScale", fChikubiScale);
+                slider["ChikubiNae"].Value   = parseExIni("AutoTUN", "ChikubiNae",   fChikubiNae);
+                slider["ChikubiBokki"].Value = slider["ChikubiNae"].Value;
+                slider["ChikubiTare"].Value  = parseExIni("AutoTUN", "ChikubiTare",  fChikubiTare);
+                iDefChikubiNae = slider["ChikubiNae"].Value;
+                iDefChikubiTare = slider["ChikubiTare"].Value;
 
                 panel["AutoBOTE"].Enabled = parseExIni("AutoBOTE", "Enabled", panel["AutoBOTE"].Enabled);
                 toggle["SlowCreampie"].Value = parseExIni("AutoBOTE", "SlowCreampie", toggle["SlowCreampie"].Value);
@@ -1492,6 +1584,11 @@ namespace CM3D2.AddYotogiSlider.Plugin
             iKupaDef           = 0;
             iAnalKupaDef       = 0;
 
+            if (panel ["AutoTUN"].Enabled) {
+                if(slider["ChikubiBokki"].Value > 0) {
+                    updateShapeKeyChikubiBokkiValue(slider["ChikubiBokki"].Value / 2f);
+                }
+            }
 
             if(panel["AutoBOTE"].Enabled) {
                 updateMaidHaraValue(Mathf.Max(iCurrentHara, iDefHara));
@@ -1624,7 +1721,60 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 }
             }
         }
-        //----
+
+        private bool VertexMorph_FromProcItem(TBody body, string sTag, float f)
+        {
+            bool bFace = false;
+            for (int i = 0; i < body.goSlot.Count; i++)
+            {
+                TMorph morph = body.goSlot[i].morph;
+                if (morph != null)
+                {
+                    if (morph.Contains(sTag))
+                    {
+                        if (i == 1)
+                        {
+                            bFace = true;
+                        }
+                        int h = (int)body.goSlot[i].morph.hash[sTag];
+                        body.goSlot[i].morph.BlendValues[h] = f;
+                        body.goSlot[i].morph.FixBlendValues();
+                    }
+                }
+            }
+            return bFace;
+        }
+
+        private bool isExistVertexMorph(TBody body, string sTag) {
+            
+            for (int i = 0; i < body.goSlot.Count; i++)
+            {
+                TMorph morph = body.goSlot[i].morph;
+                if (morph != null)
+                {
+                    if (morph.Contains(sTag))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }        //----
+
+        private void animateAutoTun() {
+            if (!panel["AutoTUN"].Enabled) return;
+            
+            float from = Mathf.Max(iDefChikubiNae, slider["ChikubiBokki"].Value);
+            int i = (int)checkCommandTunLevel(this.currentYotogiData);           
+            if (i < 0) return;
+
+            float to = from + (iTunValue [i] / 100f) * slider ["ChikubiScale"].Value / 100f;           
+            if(to >= 100f * slider["ChikubiScale"].Value / 100f) {
+                slider["ChikubiBokki"].Value = 100f * slider["ChikubiScale"].Value / 100f;
+            } else {
+                slider["ChikubiBokki"].Value = to;
+            }
+        }
 
         private void syncSlidersOnClickCommand(Yotogi.SkillData.Command.Data.Status cmStatus)
         {
@@ -1957,6 +2107,16 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 }
             }
 
+            if (panel ["AutoTUN"].Enabled) {
+                // 服を着ていると初期状態で反映されない？
+                this.updateShapeKeyChikubiBokkiValue(slider["ChikubiBokki"].Value);
+                this.updateShapeKeyChikubiTareValue(slider["ChikubiTare"].Value);
+                this.detectSkill();
+                if (this.currentYotogiData != null) {
+                    animateAutoTun();
+                }
+            }
+
             if (panel["AutoBOTE"].Enabled)
             {
                 if (pa["BOTE.絶頂"].NowPlaying)   pa["BOTE.絶頂"].Update();
@@ -2097,6 +2257,52 @@ namespace CM3D2.AddYotogiSlider.Plugin
             maid.body0.trsEyeR.localPosition = new Vector3(vl.x, Math.Min((fAheDefEye - value)/fEyePosToSliderMul, 0f), vl.z);
 
             updateSlider("Slider:EyeY", value);
+        }
+
+        private void updateChikubiNaeValue(float value)
+        {
+            float forceTareValue = 0f;
+            if(value < 0) {
+                forceTareValue = 0f - value;
+            }
+            
+            try {
+                if(forceTareValue > 0f) {
+                    updateShapeKeyChikubiTareValue(forceTareValue);
+                }
+                if(slider["ChikubiBokki"].Value < value) {
+                    updateShapeKeyChikubiBokkiValue(value);
+                }
+                
+            } catch { /*LogError(ex);*/ }
+            
+            updateSlider("Slider:ChikubiNae", value);
+        }
+
+        private void updateShapeKeyChikubiBokkiValue(float value)
+        {
+            float forceTareValue = 0f;
+            if(value < 0) {
+                forceTareValue = 0f - value;
+            }
+            
+            try {
+                if(forceTareValue > 0f) {
+                    updateShapeKeyChikubiTareValue(forceTareValue);
+                }
+                VertexMorph_FromProcItem(this.maid.body0, "chikubi_bokki", (value > 0f)? (value/100f) : 0f);
+            } catch { /*LogError(ex);*/ }
+            
+            updateSlider("Slider:ChikubiBokki", value);
+        }
+        
+        private void updateShapeKeyChikubiTareValue(float value)
+        {
+            try {
+                VertexMorph_FromProcItem(this.maid.body0, "chikubi_tare", value/100f);
+            } catch { /*LogError(ex);*/ }
+            
+            updateSlider("Slider:ChikubiTare", value);
         }
 
         private void updateMaidHaraValue(float value)
@@ -2262,6 +2468,60 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
             bLoadBoneAnimetion = true;
             //LogDebug("BoneAnimetion : {0}", i);
+        }
+
+        private TunLevel checkCommandTunLevel(Yotogi.SkillData.Command.Data.Basic cmd)
+        {
+            // 止める
+            if(cmd.name.Contains("止める")
+               || cmd.name.Contains("止めさせる")
+               || cmd.name.Contains("乳首を舐めさせる")
+               || cmd.name.Contains("四つん這い尻舐め")
+               || cmd.name.Contains("自分の胸を揉んで頂きながら")
+               ) {
+                return TunLevel.None;
+            }
+
+            // 摘み上げ
+            if(cmd.name.Contains("乳首でイカせる")
+               || cmd.name.Contains("乳首を捻り上げる")
+               || cmd.name.Contains("乳首を摘まみ上げる")) return TunLevel.Nip;
+               
+            if(cmd.group_name.Contains("パイズリ")
+               || cmd.group_name.Contains("MP全身洗い")) {
+
+                if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
+                    return TunLevel.Nip;
+                }
+
+                // 摩擦で刺激が入る系
+                return TunLevel.Friction;
+            }
+
+            if(cmd.group_name.Contains("首絞め")) {            
+                if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
+                    return TunLevel.Nip;
+                }
+                if(cmd.name.Contains("胸を叩く")) return TunLevel.Petting;
+            }
+
+            if(cmd.name.Contains("首絞めながら")
+               || cmd.name.Contains("胸をムチで叩く")
+               || cmd.name.Contains("胸にロウを垂らす")
+               || cmd.name.Contains("胸を一本ムチで叩く")
+               || cmd.name.Contains("胸に高温ロウを垂らす")
+               || cmd.name.Contains("胸を揉ませながら")
+               || cmd.name.Contains("胸を揉ませて頂く")
+               || cmd.name.Contains("胸を叩く")
+               || cmd.name.Contains("胸洗いをさせる")
+               || cmd.name.Contains("両胸を揉む")
+
+               ) return TunLevel.Petting;
+
+            if(cmd.name.Contains("胸を揉")
+               ) return TunLevel.Friction;
+
+            return TunLevel.None;
         }
 
         private KupaLevel checkSkillKupaLevel(Yotogi.SkillData sd)
