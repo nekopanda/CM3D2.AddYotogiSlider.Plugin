@@ -18,7 +18,7 @@ using PV = UnityObsoleteGui.PixelValuesCM3D2;
 
 [assembly: AssemblyTitle("CM3D2.AddYotogiSlider.Plugin")]
 [assembly: AssemblyProduct(CM3D2.AddYotogiSlider.Plugin.AddYotogiSlider.Version)]
-[assembly: AssemblyVersion("0.1.0.5")]
+[assembly: AssemblyVersion("0.1.0.6")]
 
 
 
@@ -35,7 +35,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         #region Constants
 
         public const string PluginName = "AddYotogiSlider";
-        public const string Version    = "0.1.0.5";
+        public const string Version    = "0.1.0.6";
 
         private readonly float TimePerInit        = 1.00f;
         private readonly float TimePerUpdateSpeed = 0.33f;
@@ -956,9 +956,10 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     this.maid.ResetAll();
                     maid.SetProp("Hara", (int)iDefHara, false);
                     updateSlider("Slider:Hara", iDefHara);
-                    this.updateShapeKeyChikubiBokkiValue(iDefChikubiNae);
-                    this.updateShapeKeyChikubiTareValue(iDefChikubiTare);
-
+                    if(bBokkiChikubiAvailable) {
+                        this.updateShapeKeyChikubiBokkiValue(iDefChikubiNae);
+                        this.updateShapeKeyChikubiTareValue(iDefChikubiTare);
+                    }
                     finalize();
                     }
                     break;
