@@ -43,6 +43,14 @@ namespace CM3D2.AddYotogiSlider.Plugin
         private readonly float WaitBoneLoad       = 1.00f;
         private readonly string commandUnitName = "/UI Root/YotogiPlayPanel/CommandViewer/SkillViewer/MaskGroup/SkillGroup/CommandParent/CommandUnit";
         private const string LogLabel = AddYotogiSlider.PluginName + " : ";
+        
+        public enum TunLevel
+        {
+            None = -1,
+            Friction = 0,
+            Petting = 1,
+            Nip = 2,
+        }
 
         public enum KupaLevel
         {
@@ -123,6 +131,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
         // AutoTUN
         private bool  bBokkiChikubiAvailable = false;
+        private int[] iTunValue = { 3, 5, 100 }; // 乳首勃起増加量
         private float fChikubiScale = 25f;
         private float fChikubiNae   = 0f;
         private float fChikubiBokki = 0f;
@@ -1752,6 +1761,21 @@ namespace CM3D2.AddYotogiSlider.Plugin
             return false;
         }        //----
 
+        private void animateAutoTun() {
+            if (!panel["AutoTUN"].Enabled) return;
+            
+            float from = Mathf.Max(iDefChikubiNae, slider["ChikubiBokki"].Value);
+            int i = (int)checkCommandTunLevel(this.currentYotogiData);           
+            if (i < 0) return;
+
+            float to = from + (iTunValue [i] / 100f) * slider ["ChikubiScale"].Value / 100f;           
+            if(to >= 100f * slider["ChikubiScale"].Value / 100f) {
+                slider["ChikubiBokki"].Value = 100f * slider["ChikubiScale"].Value / 100f;
+            } else {
+                slider["ChikubiBokki"].Value = to;
+            }
+        }
+
         private void syncSlidersOnClickCommand(Yotogi.SkillData.Command.Data.Status cmStatus)
         {
             if (panel["Status"].Enabled && slider["Excite"].Pin)  updateMaidExcite((int)slider["Excite"].Value);
@@ -2087,6 +2111,10 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 // 服を着ていると初期状態で反映されない？
                 this.updateShapeKeyChikubiBokkiValue(slider["ChikubiBokki"].Value);
                 this.updateShapeKeyChikubiTareValue(slider["ChikubiTare"].Value);
+                this.detectSkill();
+                if (this.currentYotogiData != null) {
+                    animateAutoTun();
+                }
             }
 
             if (panel["AutoBOTE"].Enabled)
@@ -2440,6 +2468,60 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
             bLoadBoneAnimetion = true;
             //LogDebug("BoneAnimetion : {0}", i);
+        }
+
+        private TunLevel checkCommandTunLevel(Yotogi.SkillData.Command.Data.Basic cmd)
+        {
+            // 止める
+            if(cmd.name.Contains("止める")
+               || cmd.name.Contains("止めさせる")
+               || cmd.name.Contains("乳首を舐めさせる")
+               || cmd.name.Contains("四つん這い尻舐め")
+               || cmd.name.Contains("自分の胸を揉んで頂きながら")
+               ) {
+                return TunLevel.None;
+            }
+
+            // 摘み上げ
+            if(cmd.name.Contains("乳首でイカせる")
+               || cmd.name.Contains("乳首を捻り上げる")
+               || cmd.name.Contains("乳首を摘まみ上げる")) return TunLevel.Nip;
+               
+            if(cmd.group_name.Contains("パイズリ")
+               || cmd.group_name.Contains("MP全身洗い")) {
+
+                if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
+                    return TunLevel.Nip;
+                }
+
+                // 摩擦で刺激が入る系
+                return TunLevel.Friction;
+            }
+
+            if(cmd.group_name.Contains("首絞め")) {            
+                if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
+                    return TunLevel.Nip;
+                }
+                if(cmd.name.Contains("胸を叩く")) return TunLevel.Petting;
+            }
+
+            if(cmd.name.Contains("首絞めながら")
+               || cmd.name.Contains("胸をムチで叩く")
+               || cmd.name.Contains("胸にロウを垂らす")
+               || cmd.name.Contains("胸を一本ムチで叩く")
+               || cmd.name.Contains("胸に高温ロウを垂らす")
+               || cmd.name.Contains("胸を揉ませながら")
+               || cmd.name.Contains("胸を揉ませて頂く")
+               || cmd.name.Contains("胸を叩く")
+               || cmd.name.Contains("胸洗いをさせる")
+               || cmd.name.Contains("両胸を揉む")
+
+               ) return TunLevel.Petting;
+
+            if(cmd.name.Contains("胸を揉")
+               ) return TunLevel.Friction;
+
+            return TunLevel.None;
         }
 
         private KupaLevel checkSkillKupaLevel(Yotogi.SkillData sd)
