@@ -2496,6 +2496,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
                     return TunLevel.Petting;
                 }
+                if(cmd.name.Contains("乳首を摘")
+                   || cmd.name.Contains("強引に胸を犯す")
+                   ) return TunLevel.Petting;
 
                 // 摩擦で刺激が入る系
                 return TunLevel.Friction;
