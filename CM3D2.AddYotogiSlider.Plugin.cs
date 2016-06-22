@@ -2043,7 +2043,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
 					}
 
 					// クリトリスを責める系
-					if (data.name.Contains("クリトリス") || data.group_name.Contains("オナニー")) {
+                    if (data.name.Contains("クリトリス") || data.name.Contains("オナニー") || data.group_name.Contains("バイブを舐めさせる") || data.group_name.Contains("オナニー")
+                        // スマタ・こすりつけ
+                        || (data.group_name.StartsWith("洗い") && (data.name.Contains("洗わせる") || data.name.Contains("たわし洗い")))) {
 						if(!pa["KUPACL.剥く.1"].NowPlaying) {
 							pa["KUPACL.剥く.1"].Play(0f + offset, clitorisLong + offset);
 						}
