@@ -2589,7 +2589,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
             if (cmd.command_type == Yotogi.SkillCommandType.挿入)
             {
                 string[] t0 = { "アナルセックス", "アナル正常位", "アナル後背位", "アナル騎乗位",
-                                "2穴", "4P", "アナル処女喪失" };
+                    "2穴", "4P", "アナル処女喪失", "アナル処女再喪失"};
                 if (t0.Any(t => cmd.group_name.Contains(t))) return KupaLevel.Sex;
 
                 string[] t1 = { "アナルバイブ", "アナルオナニー" };
