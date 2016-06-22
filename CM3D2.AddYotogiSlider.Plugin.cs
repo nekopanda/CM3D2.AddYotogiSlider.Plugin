@@ -1937,7 +1937,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
                 if (data.command_type == Yotogi.SkillCommandType.絶頂)
                 {
-                    if (data.name.Contains("中出し") || data.name.Contains("注ぎ込む"))
+                    if (!data.group_name.Contains("オナホコキ") && (data.name.Contains("中出し") || data.name.Contains("注ぎ込む")))
                     {
                         iBoteCount++;
                         to = Mathf.Min(iCurrentHara + iHaraIncrement, iBoteHaraMax);
@@ -2043,7 +2043,9 @@ namespace CM3D2.AddYotogiSlider.Plugin
 					}
 
 					// クリトリスを責める系
-					if (data.name.Contains("クリトリス") || data.group_name.Contains("オナニー")) {
+                    if (data.name.Contains("クリトリス") || data.name.Contains("オナニー") || data.group_name.Contains("バイブを舐めさせる") || data.group_name.Contains("オナニー")
+                        // スマタ・こすりつけ
+                        || (data.group_name.StartsWith("洗い") && (data.name.Contains("洗わせる") || data.name.Contains("たわし洗い")))) {
 						if(!pa["KUPACL.剥く.1"].NowPlaying) {
 							pa["KUPACL.剥く.1"].Play(0f + offset, clitorisLong + offset);
 						}
@@ -2492,8 +2494,11 @@ namespace CM3D2.AddYotogiSlider.Plugin
                || cmd.group_name.Contains("MP全身洗い")) {
 
                 if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
-                    return TunLevel.Nip;
+                    return TunLevel.Petting;
                 }
+                if(cmd.name.Contains("乳首を摘")
+                   || cmd.name.Contains("強引に胸を犯す")
+                   ) return TunLevel.Petting;
 
                 // 摩擦で刺激が入る系
                 return TunLevel.Friction;
@@ -2506,7 +2511,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 if(cmd.name.Contains("胸を叩く")) return TunLevel.Petting;
             }
 
-            if(cmd.name.Contains("首絞めながら")
+            if(cmd.name.Contains("首絞め")
+               || cmd.name.Contains("口を塞")
                || cmd.name.Contains("胸をムチで叩く")
                || cmd.name.Contains("胸にロウを垂らす")
                || cmd.name.Contains("胸を一本ムチで叩く")
@@ -2583,7 +2589,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
             if (cmd.command_type == Yotogi.SkillCommandType.挿入)
             {
                 string[] t0 = { "アナルセックス", "アナル正常位", "アナル後背位", "アナル騎乗位",
-                                "2穴", "4P", "アナル処女喪失" };
+                    "2穴", "4P", "アナル処女喪失", "アナル処女再喪失"};
                 if (t0.Any(t => cmd.group_name.Contains(t))) return KupaLevel.Sex;
 
                 string[] t1 = { "アナルバイブ", "アナルオナニー" };
