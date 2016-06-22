@@ -1937,7 +1937,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
 
                 if (data.command_type == Yotogi.SkillCommandType.絶頂)
                 {
-                    if (data.name.Contains("中出し") || data.name.Contains("注ぎ込む"))
+                    if (!data.group_name.Contains("オナホコキ") && (data.name.Contains("中出し") || data.name.Contains("注ぎ込む")))
                     {
                         iBoteCount++;
                         to = Mathf.Min(iCurrentHara + iHaraIncrement, iBoteHaraMax);
