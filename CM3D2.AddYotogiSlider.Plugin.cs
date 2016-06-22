@@ -2511,7 +2511,8 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 if(cmd.name.Contains("胸を叩く")) return TunLevel.Petting;
             }
 
-            if(cmd.name.Contains("首絞めながら")
+            if(cmd.name.Contains("首絞め")
+               || cmd.name.Contains("口を塞")
                || cmd.name.Contains("胸をムチで叩く")
                || cmd.name.Contains("胸にロウを垂らす")
                || cmd.name.Contains("胸を一本ムチで叩く")
