@@ -2494,7 +2494,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                || cmd.group_name.Contains("MP全身洗い")) {
 
                 if(cmd.command_type == Yotogi.SkillCommandType.絶頂) {
-                    return TunLevel.Nip;
+                    return TunLevel.Petting;
                 }
 
                 // 摩擦で刺激が入る系
