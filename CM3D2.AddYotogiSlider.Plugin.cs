@@ -1323,7 +1323,15 @@ namespace CM3D2.AddYotogiSlider.Plugin
             }
 
             // ステージリスト取得
-            foreach (KeyValuePair<Yotogi.Stage, Yotogi.StageData> kvp in Yotogi.stage_data_list) sStageNames.Add(kvp.Value.prefab_name);
+            PhotoBGData.Create();
+            Dictionary<string, List<KeyValuePair<string, object>>> dictionary = new Dictionary<string, List<KeyValuePair<string, object>>>();
+            foreach (KeyValuePair<string, List<PhotoBGData>> current in PhotoBGData.category_list)
+            {
+                for (int i = 0; i < current.Value.Count; i++)
+                {
+                    sStageNames.Add(current.Value[i].create_prefab_name);
+                }
+            }
 
             // PlayAnime
             {
