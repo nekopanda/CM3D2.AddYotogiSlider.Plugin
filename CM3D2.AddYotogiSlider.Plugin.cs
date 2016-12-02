@@ -18,7 +18,7 @@ using PV = UnityObsoleteGui.PixelValuesCM3D2;
 
 [assembly: AssemblyTitle("CM3D2.AddYotogiSlider.Plugin")]
 [assembly: AssemblyProduct(CM3D2.AddYotogiSlider.Plugin.AddYotogiSlider.Version)]
-[assembly: AssemblyVersion("0.1.0.8")]
+[assembly: AssemblyVersion("0.1.0.9")]
 
 
 
@@ -35,7 +35,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
         #region Constants
 
         public const string PluginName = "AddYotogiSlider";
-        public const string Version    = "0.1.0.8";
+        public const string Version    = "0.1.0.9";
 
         private readonly float TimePerInit        = 1.00f;
         private readonly float TimePerUpdateSpeed = 0.33f;
@@ -1379,7 +1379,11 @@ namespace CM3D2.AddYotogiSlider.Plugin
                 float mind        = (float)maid.Param.status.mind;
                 float reason      = (float)maid.Param.status.reason;
                 float sensitivity = maid.Param.status.correction_data.excite + maid.Param.status.frustration;
-                int   stageIndex  = sStageNames.IndexOf(YotogiStageSelectManager.StagePrefab);
+                string sStagePrefab = YotogiStageSelectManager.StagePrefab;
+                if(sStagePrefab == "BathRoom") {
+                    sStagePrefab = "Bathroom";
+                }
+                int   stageIndex  = sStageNames.IndexOf(sStagePrefab);
 
                 slider["Excite"]      = new YotogiSlider("Slider:Excite",       -100f, 300f,   0f,              this.OnChangeSliderExcite,      sliderName[0], true);
                 slider["Mind"]        = new YotogiSlider("Slider:Mind",         0f,    mind,   mind,            this.OnChangeSliderMind,        sliderName[1], true);
