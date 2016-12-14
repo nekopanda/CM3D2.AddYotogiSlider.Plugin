@@ -951,10 +951,7 @@ namespace CM3D2.AddYotogiSlider.Plugin
                     if (!this.maid) return;
                     this.updateMaidEyePosY(0f);
                     
-                    this.maid.ResetProp("wear");
-                    this.maid.ResetProp("Hara");
-                    this.maid.ResetAll();
-                    maid.SetProp("Hara", (int)iDefHara, false);
+                    this.maid.ResetProp("Hara", true);
                     updateSlider("Slider:Hara", iDefHara);
                     if(bBokkiChikubiAvailable) {
                         this.updateShapeKeyChikubiBokkiValue(iDefChikubiNae);
